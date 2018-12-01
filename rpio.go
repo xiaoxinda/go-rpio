@@ -372,12 +372,20 @@ func TogglePin(pin Pin) {
 //
 // Note that using this function might conflict with the same functionality of other gpio library.
 //
-// It also clears previously detected event of this pin if any.
+// It also clears previously detected event of this pin if there was any.
 //
 // Note that call with RiseEdge will disable previously set FallEdge detection and vice versa.
 // You have to call with AnyEdge, to enable detection for both edges.
 // To disable previously enabled detection call it with NoEdge.
+//
+// WARNING: this might make your Pi unresponsive, if this happens, you should either run the code as root,
+// or add `dtoverlay=gpio-no-irq` to `/boot/config.txt` and restart your pi,
 func DetectEdge(pin Pin, edge Edge) {
+	if edge != NoEdge {
+		// disable GPIO event interruption to prevent freezing in some cases
+		DisableIRQs(1<<49 | 1<<52) // gpio_int[0] and gpio_int[3]
+	}
+
 	p := uint8(pin)
 
 	// Rising edge detect enable register (19/20 depending on bank)
